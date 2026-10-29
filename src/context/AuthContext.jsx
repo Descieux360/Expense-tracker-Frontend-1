@@ -1,0 +1,36 @@
+import { createContext, useContext, useState } from 'react';
+import { api } from '../api';
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  async function authenticate(path, body) {
+    const data = await api(path, { method: 'POST', body });
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setUser(data.user);
+  }
+
+  const login = (email, password) => authenticate('/auth/login', { email, password });
+  const register = (name, email, password) =>
+    authenticate('/auth/register', { name, email, password });
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);
