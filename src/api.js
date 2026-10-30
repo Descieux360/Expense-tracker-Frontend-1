@@ -10,7 +10,16 @@ export async function api(path, options = {}) {
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Server returned an unexpected response (${res.status})`);
+  }
+  
   if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
   return data;
 }
